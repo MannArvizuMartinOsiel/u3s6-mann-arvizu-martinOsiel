@@ -1,5 +1,6 @@
 # venv/: no se sube el entorno virtual completo, cada quien crea el suyo con requirements.txt
 venv/
+env/
 # .env: el archivo con tus contraseñas reales, nunca debe llegar a GitHub
 .env
 .env example
