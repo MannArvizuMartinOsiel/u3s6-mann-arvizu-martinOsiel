@@ -1,29 +1,82 @@
-from django.shortcuts import render
-
-# Create your views here.
-# render: función que combina una plantilla con datos y arma la respuesta HTTP
-from django.shortcuts import render
-# connection: objeto de Django que expone la configuración de la base de datos activa
+from django.shortcuts import render, redirect, get_object_or_404
 from django.db import connection
+from django.contrib.auth.decorators import login_required
+from .models import Servicio
+from .forms import ServicioForm
 
-# def: toda vista es una función que recibe "request" (la petición del navegador)
+
 def inicio(request):
-    # settings_dict: diccionario interno con ENGINE, HOST, NAME, etc. de la conexión activa
     info_bd = connection.settings_dict
-    # contexto: los datos que la plantilla va a poder usar con {{ variable }}
+
     contexto = {
         'motor': info_bd['ENGINE'],
         'host': info_bd['HOST'],
     }
-    # render: junta el template "core/inicio.html" con el contexto y devuelve el HTML final
+
     return render(request, 'core/inicio.html', contexto)
-# nueva función de vista, además de "inicio" que ya tenías
+
+
 def servicios(request):
-    # lista_servicios: datos de ejemplo en Python — todavía no vienen de MySQL
-    lista_servicios = [
-        {'nombre': 'Tutorías de programación', 'precio': 150},
-        {'nombre': 'Diseño de logotipos', 'precio': 300},
-        {'nombre': 'Repostería por encargo', 'precio': 120},
-    ]
-    # se la pasamos a la plantilla con la clave 'servicios'
-    return render(request, 'core/servicios.html', {'servicios': lista_servicios})
+    lista_servicios = Servicio.objects.all()
+
+    return render(
+        request,
+        'core/servicios.html',
+        {'servicios': lista_servicios}
+    )
+
+
+@login_required
+def crear_servicio(request):
+    if request.method == 'POST':
+        form = ServicioForm(request.POST)
+
+        if form.is_valid():
+            nuevo = form.save(commit=False)
+            nuevo.propietario = request.user
+            nuevo.save()
+
+            return redirect('servicios')
+    else:
+        form = ServicioForm()
+
+    return render(
+        request,
+        'core/servicio_form.html',
+        {'form': form, 'titulo_pagina': 'Nuevo servicio'}
+    )
+
+
+@login_required
+def editar_servicio(request, pk):
+    servicio = get_object_or_404(Servicio, pk=pk)
+
+    if request.method == 'POST':
+        form = ServicioForm(request.POST, instance=servicio)
+
+        if form.is_valid():
+            form.save()
+            return redirect('servicios')
+    else:
+        form = ServicioForm(instance=servicio)
+
+    return render(
+        request,
+        'core/servicio_form.html',
+        {'form': form, 'titulo_pagina': 'Editar servicio'}
+    )
+
+
+@login_required
+def eliminar_servicio(request, pk):
+    servicio = get_object_or_404(Servicio, pk=pk)
+
+    if request.method == 'POST':
+        servicio.delete()
+        return redirect('servicios')
+
+    return render(
+        request,
+        'core/servicio_confirm_delete.html',
+        {'servicio': servicio}
+    )
