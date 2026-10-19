@@ -1,10 +1,9 @@
-{% load static %}
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
     <title>{% block titulo %}Servicios{% endblock %}</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -36,7 +35,36 @@
     </style>
 </head>
 
-<body class="max-w-4xl mx-auto py-10 px-6 bg-white text-slate-900">
+<body class="max-w-2xl mx-auto py-10 px-6 bg-white text-slate-900">
+
+    <nav class="flex justify-end items-center gap-4 mb-6 text-sm">
+        {% if user.is_authenticated %}
+            <span>Hola, <b>{{ user.username }}</b></span>
+
+            <form method="POST" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="text-blue-600 underline">
+                    Cerrar sesión
+                </button>
+            </form>
+        {% else %}
+            <a href="{% url 'login' %}" class="text-blue-600 underline">
+                Iniciar sesión
+            </a>
+
+            <a href="{% url 'registro' %}" class="text-blue-600 underline">
+                Crear cuenta
+            </a>
+        {% endif %}
+    </nav>
+
+    {% for message in messages %}
+        <div class="bg-emerald-100 text-emerald-800 px-4 py-2 rounded-lg mb-4">
+            {{ message }}
+        </div>
+    {% endfor %}
+
     {% block contenido %}{% endblock %}
+
 </body>
 </html>
